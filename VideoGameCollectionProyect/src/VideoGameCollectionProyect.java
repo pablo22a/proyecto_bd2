@@ -1,7 +1,9 @@
+package proyecto_final_bdii;
+
 import java.sql.*;
 import java.util.*;
 
-public class VideoGameCollectionProyect {
+public class VideogameCollection {
     static Connection conexion = null;
     static int userID = 0;
     static String access_type = "";
@@ -495,7 +497,7 @@ public class VideoGameCollectionProyect {
         System.out.print("!Ingrese url de la imagen del videojuego.!");
         String url = scan.nextLine();
 
-        String SQL = "INSERT INTO `games`(`game_name`, `platform_id`, `year_released`, `image_url`,) " +
+        String SQL = "INSERT INTO `games`(`game_name`, `platform_id`, `year_released`, `image_url`) " +
                 "VALUES (?,?,?,?)";
         try {
             PreparedStatement statement = conexion.prepareStatement(SQL);
@@ -1514,7 +1516,7 @@ public class VideoGameCollectionProyect {
     // 3. Menú de Gestión de Juegos (solo admin)
     private static void menuGestionJuegos() throws SQLException {
         Scanner scanner = new Scanner(System.in);
-        if (isAdmin) {
+        if (!isAdmin) {
             System.out.println("\nAcceso restringido: se requieren privilegios de administrador");
             return;
         }
@@ -1635,7 +1637,11 @@ public class VideoGameCollectionProyect {
                     //verBitacora();
                     break;
                 case 2:
-                    //restaurarBaseDatos();
+                    try {
+                        restaurarBaseDatos();
+                    } catch (SQLException e) {
+                        System.err.println("Error al restaurar la base de datos: " + e.getMessage());
+                    }
                     break;
             }
         } while(opcion != 0);
@@ -1930,6 +1936,45 @@ public class VideoGameCollectionProyect {
              ResultSet rs = stmt.executeQuery(sql)) {
             return rs.next() ? rs.getDouble(1) : 0.0;
         }
+    }
+
+    // Ultima actualizacion
+
+    public static void restaurarBaseDatos() throws SQLException {
+        Statement stmt = conexion.createStatement();
+
+        // Eliminar datos de las tablas
+        stmt.executeUpdate("DELETE FROM game_collection;");
+        stmt.executeUpdate("DELETE FROM games;");
+        stmt.executeUpdate("DELETE FROM platform;");
+        stmt.executeUpdate("DELETE FROM users;");
+
+        // Ejecutar comandos del log desde el último CHECKP
+        String sql = """
+        SELECT sql_instruction FROM log
+        WHERE id > (SELECT MAX(id) FROM log WHERE action_type = 'CHECKP')
+        ORDER BY id;
+    """;
+
+        ResultSet rs = stmt.executeQuery(sql);
+        while (rs.next()) {
+            String instruccion = rs.getString("sql_instruction");
+            if (instruccion != null && !instruccion.isBlank()) {
+                try (Statement ejecutar = conexion.createStatement()) {
+                    ejecutar.executeUpdate(instruccion);
+                } catch (SQLException e) {
+                    System.err.println("Error al ejecutar: " + instruccion);
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // Insertar nuevo checkpoint
+        stmt.executeUpdate("INSERT INTO log (user_id, action_type, table_name, record_id, sql_instruction) " +
+                "VALUES (" + userID + ", 'CHECKP', 'None', 0, 'None');");
+
+        stmt.close();
+        System.out.println("Restauración completada.");
     }
 
 }
