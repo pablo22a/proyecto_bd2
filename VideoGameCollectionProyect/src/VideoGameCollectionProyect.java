@@ -51,7 +51,7 @@ public class VideogameCollection {
         try {
             String url = "jdbc:mysql://" + ip + "/videogame_collection?useSSL=false&useTimezone=true&serverTimezone=UTC";
             String usuario = "root";
-            String contraseña = ""; // Cambia si tiene contraseña
+            String contraseña = ""; 
 
             conexion = DriverManager.getConnection(url, usuario, contraseña);
             System.out.println("¡Conexión exitosa!");
@@ -1269,38 +1269,79 @@ public class VideogameCollection {
         return valores;
     }
 
-    public static void listarColeccionUsuario(int userId) {
-        String sql = "SELECT g.game_id, g.game_name, p.platform_name, gc.rating, " +
-                "DATE_FORMAT(gc.date_added, '%Y-%m-%d') as fecha_agregado " +
-                "FROM game_collection gc " +
-                "JOIN games g ON gc.game_id = g.game_id " +
-                "JOIN platform p ON g.platform_id = p.platform_id " +
-                "WHERE gc.user_id = ? AND gc.active = TRUE " +
-                "ORDER BY g.game_name";
+    public static void listarColeccionUsuario() {
+        Scanner scanner = new Scanner(System.in);
+        int opc, userId;
+        System.out.println("Desea revisar su coleccion (1/0)?");
+        opc = scanner.nextInt();
+         if (opc == 1) {
+             userId = userID;
+             String sql = "SELECT g.game_id, g.game_name, p.platform_name, gc.rating, " +
+                     "DATE_FORMAT(gc.date_added, '%Y-%m-%d') as fecha_agregado " +
+                     "FROM game_collection gc " +
+                     "JOIN games g ON gc.game_id = g.game_id " +
+                     "JOIN platform p ON g.platform_id = p.platform_id " +
+                     "WHERE gc.user_id = ? AND gc.active = TRUE " +
+                     "ORDER BY g.game_name";
 
-        try (PreparedStatement pstmt = conexion.prepareStatement(sql)) {
-            pstmt.setInt(1, userId);
-            ResultSet rs = pstmt.executeQuery();
+             try (PreparedStatement pstmt = conexion.prepareStatement(sql)) {
+                 pstmt.setInt(1, userId);
+                 ResultSet rs = pstmt.executeQuery();
 
-            System.out.println("\n=== COLECCIÓN DE VIDEOJUEGOS ===");
-            System.out.printf("%-5s %-30s %-20s %-10s %-15s%n",
-                    "ID", "JUEGO", "PLATAFORMA", "RATING", "FECHA AGREGADO");
-            System.out.println("---------------------------------------------------------------");
+                 System.out.println("\n=== COLECCIÓN DE VIDEOJUEGOS ===");
+                 System.out.printf("%-5s %-30s %-20s %-10s %-15s%n",
+                         "ID", "JUEGO", "PLATAFORMA", "RATING", "FECHA AGREGADO");
+                 System.out.println("---------------------------------------------------------------");
 
-            while (rs.next()) {
-                System.out.printf("%-5d %-30s %-20s %-10d %-15s%n",
-                        rs.getInt("game_id"),
-                        rs.getString("game_name"),
-                        rs.getString("platform_name"),
-                        rs.getInt("rating"),
-                        rs.getString("fecha_agregado"));
-            }
+                 while (rs.next()) {
+                     System.out.printf("%-5d %-30s %-20s %-10d %-15s%n",
+                             rs.getInt("game_id"),
+                             rs.getString("game_name"),
+                             rs.getString("platform_name"),
+                             rs.getInt("rating"),
+                             rs.getString("fecha_agregado"));
+                 }
 
-            // Mostrar estadísticas
-            mostrarEstadisticasColeccion(userId);
-        } catch (SQLException e) {
-            System.err.println("Error al listar colección: " + e.getMessage());
-        }
+                 // Mostrar estadísticas
+                 mostrarEstadisticasColeccion(userId);
+             } catch (SQLException e) {
+                 System.err.println("Error al listar colección: " + e.getMessage());
+             }
+         } else {
+             System.out.println("Ingrese el id del usuario que desee ver su coleccion");
+             userId = scanner.nextInt();
+             String sql = "SELECT g.game_id, g.game_name, p.platform_name, gc.rating, " +
+                     "DATE_FORMAT(gc.date_added, '%Y-%m-%d') as fecha_agregado " +
+                     "FROM game_collection gc " +
+                     "JOIN games g ON gc.game_id = g.game_id " +
+                     "JOIN platform p ON g.platform_id = p.platform_id " +
+                     "WHERE gc.user_id = ? AND gc.active = TRUE " +
+                     "ORDER BY g.game_name";
+
+             try (PreparedStatement pstmt = conexion.prepareStatement(sql)) {
+                 pstmt.setInt(1, userId);
+                 ResultSet rs = pstmt.executeQuery();
+
+                 System.out.println("\n=== COLECCIÓN DE VIDEOJUEGOS ===");
+                 System.out.printf("%-5s %-30s %-20s %-10s %-15s%n",
+                         "ID", "JUEGO", "PLATAFORMA", "RATING", "FECHA AGREGADO");
+                 System.out.println("---------------------------------------------------------------");
+
+                 while (rs.next()) {
+                     System.out.printf("%-5d %-30s %-20s %-10d %-15s%n",
+                             rs.getInt("game_id"),
+                             rs.getString("game_name"),
+                             rs.getString("platform_name"),
+                             rs.getInt("rating"),
+                             rs.getString("fecha_agregado"));
+                 }
+
+                 // Mostrar estadísticas
+                 mostrarEstadisticasColeccion(userId);
+             } catch (SQLException e) {
+                 System.err.println("Error al listar colección: " + e.getMessage());
+             }
+         }
     }
 
     private static void mostrarEstadisticasColeccion(int userId) throws SQLException {
@@ -1557,7 +1598,7 @@ public class VideogameCollection {
         int opcion;
         do {
             System.out.println("\n=== MI COLECCIÓN ===");
-            System.out.println("1. Ver mi colección");
+            System.out.println("1. Ver alguna colección");
             System.out.println("2. Agregar juego a mi colección");
             System.out.println("3. Modificar rating de un juego");
             System.out.println("4. Eliminar juego de mi colección");
@@ -1569,7 +1610,7 @@ public class VideogameCollection {
 
             switch(opcion) {
                 case 1:
-                    listarColeccionUsuario(userID);
+                    listarColeccionUsuario();
                     break;
                 case 2:
                     addGame_Collection();
@@ -1590,9 +1631,8 @@ public class VideogameCollection {
         int opcion;
         do {
             System.out.println("\n=== CONSULTAS Y REPORTES ===");
-            System.out.println("1. Listar mi colección completa");
-            System.out.println("2. Ver juegos más populares");
-            System.out.println("3. Top 5 juegos con mejor rating");
+            System.out.println("1. Ver juegos más populares");
+            System.out.println("2. Top 5 juegos con mejor rating");
             System.out.println("0. Volver al menú principal");
             System.out.print("Seleccione una opción: ");
 
@@ -1601,12 +1641,9 @@ public class VideogameCollection {
 
             switch(opcion) {
                 case 1:
-                    listarColeccionUsuario(usuarioID);
-                    break;
-                case 2:
                     listarJuegosPopulares();
                     break;
-                case 3:
+                case 2:
                     listarTop5MejorRating();
                     break;
             }
@@ -1634,7 +1671,7 @@ public class VideogameCollection {
 
             switch(opcion) {
                 case 1:
-                    //verBitacora();
+                    despliegaTabla("log","*", "1 GROUP By log_id DESC limit 10");
                     break;
                 case 2:
                     try {
@@ -1941,40 +1978,68 @@ public class VideogameCollection {
     // Ultima actualizacion
 
     public static void restaurarBaseDatos() throws SQLException {
-        Statement stmt = conexion.createStatement();
+        boolean autoCommitOriginal = conexion.getAutoCommit();
+        conexion.setAutoCommit(false);
 
-        // Eliminar datos de las tablas
-        stmt.executeUpdate("DELETE FROM game_collection;");
-        stmt.executeUpdate("DELETE FROM games;");
-        stmt.executeUpdate("DELETE FROM platform;");
-        stmt.executeUpdate("DELETE FROM users;");
+        try {
+            // 1. Obtener ID del último checkpoint
+            int ultimoCheckpId;
+            try (Statement stmtQuery = conexion.createStatement();
+                 ResultSet rs = stmtQuery.executeQuery(
+                     "SELECT COALESCE(MAX(log_id), 0) FROM log WHERE action_type = 'CHECKP'")) {
+                rs.next();
+                ultimoCheckpId = rs.getInt(1);
+            }
 
-        // Ejecutar comandos del log desde el último CHECKP
-        String sql = """
-        SELECT sql_instruction FROM log
-        WHERE id > (SELECT MAX(id) FROM log WHERE action_type = 'CHECKP')
-        ORDER BY id;
-    """;
+            // 2. Limpieza inicial
+            try (Statement stmtUpdate = conexion.createStatement()) {
+                stmtUpdate.execute("SET FOREIGN_KEY_CHECKS = 0");
+                stmtUpdate.executeUpdate("DELETE FROM game_collection");
+                stmtUpdate.executeUpdate("DELETE FROM games");
+                stmtUpdate.executeUpdate("DELETE FROM users");
+                stmtUpdate.executeUpdate("DELETE FROM platform");
+            }
 
-        ResultSet rs = stmt.executeQuery(sql);
-        while (rs.next()) {
-            String instruccion = rs.getString("sql_instruction");
-            if (instruccion != null && !instruccion.isBlank()) {
-                try (Statement ejecutar = conexion.createStatement()) {
-                    ejecutar.executeUpdate(instruccion);
-                } catch (SQLException e) {
-                    System.err.println("Error al ejecutar: " + instruccion);
-                    e.printStackTrace();
+            // 3. Restauración - SOLO INSERT, UPDATE, DELETE válidos
+            try (Statement stmtRestore = conexion.createStatement();
+                 ResultSet rs = stmtRestore.executeQuery(
+                     "SELECT sql_instruction FROM log " +
+                     "WHERE log_id <= " + ultimoCheckpId + " " +
+                     "AND action_type IN ('INSERT', 'UPDATE', 'DELETE') " +  // Solo operaciones válidas
+                     "AND sql_instruction IS NOT NULL " +  // Excluir instrucciones nulas
+                     "AND sql_instruction <> 'None' " +    // Excluir valores 'None'
+                     "ORDER BY log_id ASC")) {             // Orden ascendente (más antiguo primero)
+
+                try (Statement stmtExec = conexion.createStatement()) {
+                    while (rs.next()) {
+                        String sql = rs.getString("sql_instruction");
+                        if (sql != null && !sql.trim().isEmpty()) {
+                            try {
+                                stmtExec.executeUpdate(sql);
+                            } catch (SQLException e) {
+                                System.err.println("Error ejecutando: " + sql);
+                                throw e;
+                            }
+                        }
+                    }
                 }
             }
+
+            // 4. Nuevo checkpoint
+            try (Statement stmtFinal = conexion.createStatement()) {
+                stmtFinal.executeUpdate(
+                    "INSERT INTO log (user_id, action_type, table_name, record_id, sql_instruction) " +
+                    "VALUES (-1,'CHECKP', 'None', 0, 'None')");
+                stmtFinal.execute("SET FOREIGN_KEY_CHECKS = 1");
+            }
+
+            conexion.commit();
+            System.out.println("Restauración completada exitosamente.");
+        } catch (SQLException e) {
+            conexion.rollback();
+            throw new SQLException("Error al restaurar la base de datos: " + e.getMessage(), e);
+        } finally {
+            conexion.setAutoCommit(autoCommitOriginal);
         }
-
-        // Insertar nuevo checkpoint
-        stmt.executeUpdate("INSERT INTO log (user_id, action_type, table_name, record_id, sql_instruction) " +
-                "VALUES (" + userID + ", 'CHECKP', 'None', 0, 'None');");
-
-        stmt.close();
-        System.out.println("Restauración completada.");
     }
-
 }
